@@ -163,14 +163,40 @@ write_output() {
 
 log "Semantic version action started. mode=${TYPE}"
 
-# Normalize MAP: if it's empty string or equals "{}" treat as missing
-MAP_TRIMMED="$(printf '%s' "$MAP" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
-if [ -z "$MAP_TRIMMED" ] || [ "$MAP_TRIMMED" = "{}" ]; then
-  log "Error: map input is required."
+# DEBUG: Show what was received
+log "DEBUG: Positional args: \$1='${1:-}' \$2='${2:-}'"
+log "DEBUG: ENV vars: INPUT_TYPE='${INPUT_TYPE:-}' INPUT_MAP='${INPUT_MAP:-}'"
+log "DEBUG: Resolved TYPE='${TYPE}' MAP length=${#MAP}"
+
+# Normalize MAP: remove newlines, extra spaces, and trim
+# This handles multi-line YAML strings properly
+MAP=$(echo "$MAP" | tr -d '\n\r' | sed 's/[[:space:]]\+/ /g' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+
+log "DEBUG: Normalized MAP='${MAP}'"
+
+# Check if MAP is empty or just "{}"
+if [ -z "$MAP" ] || [ "$MAP" = "{}" ]; then
+  log "Error: map input is required. Received: '${MAP}'"
+  log "Hint: When using docker://, make sure to set INPUT_MAP env variable"
+  log "Example:"
+  log "  env:"
+  log "    INPUT_MAP: '{\"major\":[\"breaking\"],\"minor\":[\"feature\"],\"patch\":[\"fix\"]}'"
   write_output "version" ""
   write_output "release_needed" "false"
   write_output "release_id" ""
   exit 1
+fi
+
+# Validate JSON with jq
+if _has_jq; then
+  if ! echo "$MAP" | jq . >/dev/null 2>&1; then
+    log "Error: MAP is not valid JSON: ${MAP}"
+    write_output "version" ""
+    write_output "release_needed" "false"
+    write_output "release_id" ""
+    exit 1
+  fi
+  log "MAP JSON is valid"
 fi
 
 detected=""
