@@ -35,6 +35,6 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/semantic-version:${{ github.ref_name }}
-            ghcr.io/${{ github.repository_owner }}/semantic-version:latest
+            ghcr.io/${{ github.repository_owner }}/semantic-version-action:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/semantic-version-action:latest
           platforms: linux/amd64,linux/arm64
