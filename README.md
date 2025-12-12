@@ -10,6 +10,7 @@ Automatically calculate the next semantic version (`MAJOR.MINOR.PATCH`) based on
 - Configurable token → version bump mapping
 - Outputs: `version`, `release_needed`, `release_id`
 - Docker-based for consistency
+- **Version detection based on Git tags** (format: `v*.*.*` or `*.*.*`)
 
 ---
 
@@ -60,6 +61,16 @@ Automatically calculate the next semantic version (`MAJOR.MINOR.PATCH`) based on
 
 ---
 
+## 🔄 Versioning Logic
+
+The action automatically determines the current version by scanning Git tags in the repository:
+- Searches for tags matching `v*.*.*` (e.g., `v1.2.3`) or `*.*.*` (e.g., `1.2.3`)
+- Uses the latest semantic version tag as the base
+- If no valid tags exist, starts from `v0.0.0`
+- Increments the appropriate version component (MAJOR, MINOR, or PATCH) based on detected changes
+
+---
+
 ## 🎯 Detection Modes
 
 **`label`** – Reads first PR label (e.g., `feature`, `bug`)  
@@ -85,7 +96,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Required for Git tag detection
 
       - name: Calculate version
         id: version
@@ -115,6 +126,9 @@ jobs:
 **Empty outputs?**  
 → Add `id: version` to your step. For `docker://`, use `env:` not `with:`.
 
+**Version starts at v0.0.0?**  
+→ Ensure `fetch-depth: 0` is set in checkout step to access all Git tags.
+
 ---
 
 ## 📊 Method Comparison
@@ -124,4 +138,3 @@ jobs:
 | Syntax | `with:` ✅ | `env:` only |
 | Multi-line JSON | ✅ | ❌ |
 | Recommended | ✅ | Testing only |
-
